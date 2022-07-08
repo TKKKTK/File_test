@@ -2,12 +2,14 @@ package com.wg.file_test;
 
 import static android.content.ContentValues.TAG;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -15,6 +17,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -23,44 +26,61 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * android:requestLegacyExternalStorage="false" false代表采用分区存储
+ * 为true 代表的是采用之前的存储方式
+ */
 public class MainActivity extends AppCompatActivity {
 
     private EditText input_text;
     private Button write_button;
     private TextView read_text;
     private Button read_button;
+    private Button file_create;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //resquestPermisstion();
+//        resquestPermisstion();
         input_text = (EditText) findViewById(R.id.input_text);
         write_button = (Button) findViewById(R.id.write_button);
         read_text = (TextView) findViewById(R.id.read_text);
         read_button = (Button) findViewById(R.id.read_button);
+        file_create = (Button) findViewById(R.id.file_create);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            boolean isStorage = Environment.isExternalStorageLegacy();
+            Log.d(TAG,"是否支持外部存储：" + String.valueOf(isStorage));
+        }
+
 
         write_button.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.Q)
             @Override
             public void onClick(View view) {
-                if (save(input_text.getText().toString())){
-                    Toast.makeText(MainActivity.this,"文件写入成功",Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, "dir: "+getFilesDir());
-
-                }else {
-                    Toast.makeText(MainActivity.this,"文件写入失败",Toast.LENGTH_SHORT).show();
-                }
+//                if (save(input_text.getText().toString())){
+//                    Toast.makeText(MainActivity.this,"文件写入成功",Toast.LENGTH_SHORT).show();
+//                    Log.d(TAG, "dir: "+getFilesDir());
+//
+//                }else {
+//                    Toast.makeText(MainActivity.this,"文件写入失败",Toast.LENGTH_SHORT).show();
+//                }
+                createFile(input_text.getText().toString());
             }
         });
 
@@ -71,7 +91,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        file_create.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.Q)
+            @Override
+            public void onClick(View view) {
 
+            }
+        });
     }
 
     public boolean save(String content){
@@ -125,6 +151,62 @@ public class MainActivity extends AppCompatActivity {
         return content.toString();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    public void createFile(String content){
+
+        //判断当前android 版本是否支持分区存储
+        if (!Environment.isExternalStorageLegacy()){
+            //采取分区存储方式
+            //在Android R 下创建文件
+            //获取到一个路径
+            Uri uri = MediaStore.Files.getContentUri("external");
+            //创建一个ContentValue对象，用来给存储文件数据的数据库进行插入操作
+            ContentValues contentValues = new ContentValues();
+            //首先创建zee.txt要存储的路径 要创建的文件的上一级存储目录
+            String path = Environment.DIRECTORY_DOWNLOADS + "/ZEE";
+            Log.d(TAG, "createFile: "+path);
+            //给路径的字段设置键值对
+            contentValues.put(MediaStore.Downloads.RELATIVE_PATH,Environment.DIRECTORY_DOWNLOADS+"/ZEE");
+            //设置文件的名字
+            contentValues.put(MediaStore.Downloads.DISPLAY_NAME,"Zee.txt");
+            contentValues.put(MediaStore.Downloads.TITLE,"Zee");
+
+            //插入一条数据，然后把生成的这个文件的路径返回回来
+            Uri insert = getContentResolver().insert(uri,contentValues);
+
+            OutputStream outputStream = null;
+            try {
+                outputStream = getContentResolver().openOutputStream(insert);
+                BufferedOutputStream bos = new BufferedOutputStream(outputStream);
+                bos.write(content.getBytes());
+                bos.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }else{
+                //传统File方式
+                File file = new File("/sdcard/WG.txt");
+                OutputStream outputStream = null;
+            if (!file.exists()){
+                try {
+                    file.createNewFile();
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+
+            try {
+                outputStream = new FileOutputStream(file);
+                outputStream.write(content.getBytes());
+                outputStream.close();
+            }catch (FileNotFoundException e){
+                e.printStackTrace();
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+
+    }
 
     public void resquestPermisstion(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
