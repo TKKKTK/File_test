@@ -37,6 +37,18 @@
         android:layout_height="wrap_content"
         android:text="创建文件" />
 
+    <Button
+        android:id="@+id/open_file"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="打开文件"/>
+
+    <Button
+        android:id="@+id/save_file"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="保存文件"/>
+
     <TextView
         android:id="@+id/read_text"
         android:layout_width="match_parent"

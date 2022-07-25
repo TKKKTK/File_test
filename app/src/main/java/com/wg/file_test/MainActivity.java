@@ -17,6 +17,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
@@ -50,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView read_text;
     private Button read_button;
     private Button file_create;
+    private Button open_file;
+    private Button save_file;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
         read_text = (TextView) findViewById(R.id.read_text);
         read_button = (Button) findViewById(R.id.read_button);
         file_create = (Button) findViewById(R.id.file_create);
+        open_file = (Button) findViewById(R.id.open_file);
+        save_file = (Button) findViewById(R.id.save_file);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             boolean isStorage = Environment.isExternalStorageLegacy();
@@ -96,6 +101,45 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
+            }
+        });
+
+        /**
+         * 打开文件
+         */
+        open_file.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Uri uri = MediaStore.Files.getContentUri("external");
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("*/*");
+
+                // Optionally, specify a URI for the file that should appear in the
+                // system file picker when it loads.
+                intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri);
+
+                startActivityForResult(intent, 100);
+            }
+        });
+
+        /**
+         * 创建并保存新文件
+         */
+        save_file.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Uri uri = MediaStore.Files.getContentUri("external");
+                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("application/txt");
+                intent.putExtra(Intent.EXTRA_TITLE, "invoice.txt");
+
+                // Optionally, specify a URI for the directory that should be opened in
+                // the system file picker when your app creates the document.
+                intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri);
+
+                startActivityForResult(intent, 1);
             }
         });
     }
@@ -169,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
             contentValues.put(MediaStore.Downloads.RELATIVE_PATH,Environment.DIRECTORY_DOWNLOADS+"/ZEE");
             //设置文件的名字
             contentValues.put(MediaStore.Downloads.DISPLAY_NAME,"Zee.txt");
+            //可有可无
             contentValues.put(MediaStore.Downloads.TITLE,"Zee");
 
             //插入一条数据，然后把生成的这个文件的路径返回回来
@@ -220,4 +265,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+
+
+
 }

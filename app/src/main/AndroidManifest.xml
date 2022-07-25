@@ -20,7 +20,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.File_Test"
         tools:targetApi="31"
-        android:requestLegacyExternalStorage="false"> <!--开启分区存储-->
+        android:requestLegacyExternalStorage="false"> <!--开启分区存储 true:不支持分区存储 false:支持分区存储-->
         <activity
             android:name=".MainActivity"
             android:exported="true">
