@@ -2,6 +2,7 @@ package com.wg.file_test;
 
 import static android.content.ContentValues.TAG;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -35,6 +36,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -53,6 +55,35 @@ public class MainActivity extends AppCompatActivity {
     private Button file_create;
     private Button open_file;
     private Button save_file;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 100 && resultCode == RESULT_OK){
+            Log.d("是否选取到文件:", "onActivityResult: ");
+            Uri uri = data.getData();
+            Log.d(TAG, "文件的uri: "+uri);
+            InputStream inputStream = null;
+             StringBuilder stringBuilder = new StringBuilder();
+            try {
+                inputStream = getContentResolver().openInputStream(uri);
+
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                BufferedReader reader = new BufferedReader(inputStreamReader);
+                String line;
+                while ((line = reader.readLine()) != null){
+                      stringBuilder.append(line);
+                }
+                read_text.setText(stringBuilder);
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,9 +150,15 @@ public class MainActivity extends AppCompatActivity {
                 // system file picker when it loads.
                 intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri);
 
-                startActivityForResult(intent, 100);
+//                startActivityForResult(intent, 100);
+
+                startActivityIfNeeded(intent,100);
             }
         });
+
+
+
+
 
         /**
          * 创建并保存新文件
